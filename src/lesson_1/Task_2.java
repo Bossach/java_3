@@ -18,5 +18,10 @@ public class Task_2 {
 
     public static <T> ArrayList<T> toArrayList(T[] array) {
         return new ArrayList<>(Arrays.asList(array));
+
+//        Ехал ArrayList через array
+//        Видит ArrayList в array'е List
+//        Cунул ArrayList <T> в array
+//        List ArrayList'а за <T> return;
     }
 }
