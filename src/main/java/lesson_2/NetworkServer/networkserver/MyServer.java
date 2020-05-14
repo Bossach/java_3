@@ -7,6 +7,10 @@ import lesson_2.NetworkServer.networkserver.clienthandler.ClientHandler;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +19,8 @@ public class MyServer {
     private final int port;
     private final List<ClientHandler> clients;
     private final AuthService authService;
+    private Connection connection;
+    private Statement statement;
 
     public MyServer(int port) {
         this.port = port;
@@ -27,6 +33,9 @@ public class MyServer {
             System.out.println("Server is running");
             authService.start();
 
+            Class.forName("org.sqlite.JDBC");
+            connection = DriverManager.getConnection("jdbc:sqlite:test.db");
+            statement = connection.createStatement();
 
             //noinspection InfiniteLoopStatement
             while (true) {
@@ -42,7 +51,7 @@ public class MyServer {
                 }
             }
 
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException | SQLException e) {
             System.err.println(e.getMessage());
             e.printStackTrace();
         } finally {
@@ -100,9 +109,19 @@ public class MyServer {
 
     public synchronized void subscribe(ClientHandler clientHandler) {
         clients.add(clientHandler);
+        try {
+            statement.execute("INSERT INTO log VALUES (CURRENT_TIMESTAMP, \"User " + clientHandler.getNickname() + " connected.\");");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public synchronized void unsubscribe(ClientHandler clientHandler) {
         clients.remove(clientHandler);
+        try {
+            statement.execute("INSERT INTO log VALUES (CURRENT_TIMESTAMP, \"User " + clientHandler.getNickname() + " disconnected.\");");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
