@@ -12,7 +12,18 @@ public class MainClass {
         for (int i = 0; i < cars.length; i++) {
             new Thread(cars[i]).start();
         }
+        try {
+            race.startCountDown.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         System.out.println("ВАЖНОЕ ОБЪЯВЛЕНИЕ >>> Гонка началась!!!");
+        try {
+            race.finishCountDown.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         System.out.println("ВАЖНОЕ ОБЪЯВЛЕНИЕ >>> Гонка закончилась!!!");
+        System.out.println("Победитель " + race.getWinner().getName());
     }
 }
