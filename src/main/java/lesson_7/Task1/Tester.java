@@ -25,7 +25,7 @@ public class Tester {
         }
     }
 
-    public static void start(Class testsClass) {
+    public static <T> void start(Class<T> testsClass) {
 
         Method[] methods = testsClass.getMethods();
 
@@ -34,8 +34,8 @@ public class Tester {
         List<Method> test = new ArrayList<>();
 
         for (Method method : methods) {
-            if (method.getAnnotation(BeforeSuite.class) != null) before.add(method);
-            if (method.getAnnotation(AfterSuite.class) != null) after.add(method);
+            if (method.getAnnotation(BeforeSuite.class) != null) {before.add(method); continue;}
+            if (method.getAnnotation(AfterSuite.class) != null) {after.add(method); continue;}
             if (method.getAnnotation(Test.class) != null) test.add(method);
         }
 
