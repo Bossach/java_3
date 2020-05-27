@@ -13,32 +13,33 @@ public class Task {
     public final Class<?> returnType;
     public final Class<?>[] parameterTypes;
     private final Predicate<Object> predicate;
-    private final List<Object[]> parametersSet;
+    private final List<Object[][]> dataSet;
+    private String description = "";
 
-    public Task(String supposedName, Class<?> returnType, Class<?>[] parameterTypes, Predicate<Object> predicate, Object[][] parameters) {
+    public Task(String supposedName, Class<?> returnType, Class<?>[] parameterTypes, Predicate<Object> predicate, Object[][][] data) {
         this.supposedName = supposedName;
         this.returnType = returnType;
         this.parameterTypes = parameterTypes;
         this.predicate = predicate;
-        parametersSet = Arrays.asList(parameters);
+        dataSet = Arrays.asList(data);
     }
 
-    public void check(Class<?> workClass) {
+    public void checkTask(Class<?> workClass) {
 
-        String name = workClass.getName().substring(0, workClass.getName().length() - 6);
+        List<Method> checkCandidates = filterMatchingMethods(workClass.getDeclaredMethods());
 
-        System.out.println(name + " :");
+        for (Method checkCandidate : checkCandidates) {
+            checkCandidate.setAccessible(true);
+        }
 
-        List<Method> checkCandidates = filter(workClass.getMethods());
-
-        System.out.println("\t" + supposedName + " : ");
+        System.out.print("\t" + supposedName + " " + description + " : ");
 
         String msg = "Failed or can't check!";
 
         //If any of candidates passed the task is passed
         for (Method method : checkCandidates) {
             try {
-                if (test(workClass, method)) {
+                if (checkMethod(workClass, method)) {
                     msg = "Passed!";
                     break;
                 }
@@ -49,19 +50,25 @@ public class Task {
         System.out.println(msg);
     }
 
-    public boolean test(Class<?> aClass, Method method) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        for (Object[] parameters : parametersSet) {
-            if (!singleTest(aClass, method, parameters))
+    public boolean checkMethod(Class<?> aClass, Method method) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        for (Object[] data : dataSet) {
+            if (!singleTest(aClass, method, data)) {
                 return false;
+            }
         }
         return true;
     }
 
-    private boolean singleTest(Class<?> aClass, Method method, Object[] parameters) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        return predicate.test(method.invoke(aClass.getConstructor().newInstance(), parameters));
+    private boolean singleTest(Class<?> aClass, Method method, Object[] data) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        Object runObject = aClass.getConstructor().newInstance();
+        //Arr with 3 elems goin to test |
+        //-----------(1)expected return |value------(2)returns fact value----------(--this| is arguments array to invoke with them--)
+        //----------------------------- V----V(1)-----V(2)--------------------------------V--------V(3)Arguments array
+        Object testArgument = new Object[]{data[0], method.invoke(runObject,(Object[]) data[1]), data[1]};
+        return predicate.test(testArgument);
     }
 
-    private List<Method> filter(Method[] methods) {
+    private List<Method> filterMatchingMethods(Method[] methods) {
         List<Method> list = new ArrayList<>();
 
         //Find methods matching by arguments and return type
@@ -74,16 +81,17 @@ public class Task {
         for (Method method : list) {
             if (method.getName().equalsIgnoreCase(supposedName)) {
 
-                //TODO delete debug!!!
-                System.out.println("FoundByName! " + supposedName);
-
                 ArrayList<Method> nameMatchList = new ArrayList<>();
                 nameMatchList.add(method);
                 return nameMatchList;
             }
         }
 
-        //if name didnt found returns all matching by return type and parameters types
+        //if name didn't found returns all matching by return type and parameters types
         return list;
+    }
+
+    public void setDescription(String description) {
+        this.description = "(description: " + description + ")";
     }
 }
