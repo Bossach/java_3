@@ -3,14 +3,11 @@ package lesson_2.NetworkServer.networkserver;
 import lesson_2.NetworkServer.networkserver.auth.AuthService;
 import lesson_2.NetworkServer.networkserver.auth.BaseAuthService;
 import lesson_2.NetworkServer.networkserver.clienthandler.ClientHandler;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,8 +16,7 @@ public class MyServer {
     private final int port;
     private final List<ClientHandler> clients;
     private final AuthService authService;
-    private Connection connection;
-    private Statement statement;
+    private final Logger logger = Logger.getLogger(getClass());
 
     public MyServer(int port) {
         this.port = port;
@@ -30,29 +26,25 @@ public class MyServer {
 
     public void start() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server is running");
+            logger.info("Starting server");
             authService.start();
-
-            Class.forName("org.sqlite.JDBC");
-            connection = DriverManager.getConnection("jdbc:sqlite:test.db");
-            statement = connection.createStatement();
 
             //noinspection InfiniteLoopStatement
             while (true) {
-                System.out.println("Waiting for client connection...");
+                logger.info("Waiting for client connection...");
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Client has been connected");
+                logger.info("Client has been connected");
                 ClientHandler handler = new ClientHandler(clientSocket, this);
                 try {
                     handler.handle();
                 } catch (IOException e) {
-                    System.err.println("Failed to handle client connectiion!");
+                    logger.warn("Failed to handle client connection!");
                     clientSocket.close();
                 }
             }
 
-        } catch (IOException | ClassNotFoundException | SQLException e) {
-            System.err.println(e.getMessage());
+        } catch (IOException e) {
+            logger.error(e.getMessage());
             e.printStackTrace();
         } finally {
             authService.stop();
@@ -109,19 +101,11 @@ public class MyServer {
 
     public synchronized void subscribe(ClientHandler clientHandler) {
         clients.add(clientHandler);
-        try {
-            statement.execute("INSERT INTO log VALUES (CURRENT_TIMESTAMP, \"User " + clientHandler.getNickname() + " connected.\");");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        logger.info("User " + clientHandler.getNickname() + " entered chat.");
     }
 
     public synchronized void unsubscribe(ClientHandler clientHandler) {
         clients.remove(clientHandler);
-        try {
-            statement.execute("INSERT INTO log VALUES (CURRENT_TIMESTAMP, \"User " + clientHandler.getNickname() + " disconnected.\");");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        logger.info("User " + clientHandler.getNickname() + " leaved chat.");
     }
 }

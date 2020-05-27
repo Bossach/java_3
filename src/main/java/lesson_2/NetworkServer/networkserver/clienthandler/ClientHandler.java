@@ -4,6 +4,7 @@ package lesson_2.NetworkServer.networkserver.clienthandler;
 import lesson_2.NetworkServer.networkserver.MessageConstant;
 import lesson_2.NetworkServer.networkserver.MyServer;
 import lesson_2.NetworkServer.networkserver.auth.AuthService;
+import org.apache.log4j.Logger;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -13,6 +14,7 @@ import java.net.Socket;
 public class ClientHandler {
 
     private static final long AUTH_TIMEOUT = 120000;
+    private static final Logger logger = Logger.getLogger(lesson_2.NetworkServer.networkserver.clienthandler.ClientHandler.class);
     private final MyServer serverInstance;
     private final AuthService authService;
     private final Socket clientSocket;
@@ -37,7 +39,7 @@ public class ClientHandler {
                 authentication();
                 readMessages();
             } catch (IOException e) {
-                System.out.println("Connection has been failed");
+                logger.info("Client connection was dropped");
             } finally {
                 closeConnection();
             }

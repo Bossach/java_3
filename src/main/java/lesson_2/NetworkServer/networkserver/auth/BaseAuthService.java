@@ -1,8 +1,12 @@
 package lesson_2.NetworkServer.networkserver.auth;
 
+import org.apache.log4j.Logger;
+
 import java.util.*;
 
 public class BaseAuthService implements AuthService {
+
+    private static final Logger logger = Logger.getLogger(lesson_2.NetworkServer.networkserver.auth.BaseAuthService.class);
 
     private static class AuthEntry {
         private String login;
@@ -43,11 +47,11 @@ public class BaseAuthService implements AuthService {
 
     @Override
     public void start() {
-        System.out.println("Auth service has been started");
+        logger.info("Auth service has been started");
     }
 
     @Override
     public void stop() {
-        System.out.println("Auth service has been stopped");
+        logger.info("Auth service has been stopped");
     }
 }
