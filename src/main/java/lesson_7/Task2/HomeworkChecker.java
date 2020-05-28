@@ -48,6 +48,7 @@ public class HomeworkChecker {
 
         Class<?> workClass;
         try {
+            //noinspection deprecation
             ClassLoader loader = new URLClassLoader(new URL[]{file.toURL()}, getClass().getClassLoader());
             workClass = loader.loadClass(className);
         } catch (ClassNotFoundException | MalformedURLException e) {
