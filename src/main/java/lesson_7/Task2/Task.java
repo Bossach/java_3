@@ -5,24 +5,28 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
 
-public class Task {
+public /*abstract*/ class Task {
 
     public final String supposedName;
     public final Class<?> returnType;
     public final Class<?>[] parameterTypes;
-    private final Predicate<Object> predicate;
+    private final Checker checker;
     private final List<Object[][]> dataSet;
     private String description = "";
 
-    public Task(String supposedName, Class<?> returnType, Class<?>[] parameterTypes, Predicate<Object> predicate, Object[][][] data) {
+    public Task(String supposedName, Class<?> returnType, Class<?>[] parameterTypes, Checker checker, Object[][][] data) {
         this.supposedName = supposedName;
         this.returnType = returnType;
         this.parameterTypes = parameterTypes;
-        this.predicate = predicate;
+        this.checker = checker;
         dataSet = Arrays.asList(data);
     }
+
+    /*
+   //TODO
+    public abstract boolean check(Object resVal, Object expVal, Object[] argSet);
+     */
 
     public void checkTask(Class<?> workClass) {
 
@@ -61,11 +65,18 @@ public class Task {
 
     private boolean singleTest(Class<?> aClass, Method method, Object[] data) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         Object runObject = aClass.getConstructor().newInstance();
-        //Arr with 3 elems goin to test |
-        //-----------(1)expected return |value------(2)returns fact value----------(--this| is arguments array to invoke with them--)
-        //----------------------------- V----V(1)-----V(2)--------------------------------V--------V(3)Arguments array
-        Object testArgument = new Object[]{data[0], method.invoke(runObject,(Object[]) data[1]), data[1]};
-        return predicate.test(testArgument);
+        Object[] argSet =(Object[]) data[1];
+        Object[] exVlArr = (Object[]) data[0];
+        Object expVal = exVlArr.length != 0? exVlArr[0] : null; //may no exist
+        Object resVal;
+
+        try {
+            resVal = method.invoke(runObject, argSet);
+        } catch (Exception e) {
+            System.out.println("Method threw exception: " + e.getMessage());
+            return false;
+        }
+        return checker.check(resVal, expVal, argSet);
     }
 
     private List<Method> filterMatchingMethods(Method[] methods) {
